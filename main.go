@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/praveenmahasena/tui_chat_client/internal"
+)
 
 func main() {
-	fmt.Println("starting.....")
+	if err := internal.Start(); err != nil {
+		log.Fatalln(err)
+	}
 }
