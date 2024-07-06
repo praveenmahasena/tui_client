@@ -1,13 +1,12 @@
 package internal
 
-import (
-	"github.com/praveenmahasena/tui_chat_client/internal/publisher"
-)
+import "github.com/praveenmahasena/tui_chat_client/internal/client/client"
 
 func Start() error {
-	p, err := publisher.New()
+	c, err := client.New()
 	if err != nil {
 		return err
 	}
-	return p.Run()
+
+	return c.Start()
 }

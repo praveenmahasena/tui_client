@@ -2,6 +2,7 @@ all: test
 all: vet
 all: package
 all: package_race
+all: run
 
 
 test: vet
@@ -22,3 +23,6 @@ client:
 
 client_race:
 	go build --race -o ./bin/client_race .
+
+run:
+	go run .
