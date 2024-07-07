@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -22,6 +21,7 @@ func New() (*Client, error) {
 	if err := c.GetArgs(); err != nil {
 		return nil, err
 	}
+	c.ChatType = "Public Chat"
 	return &c, nil
 }
 
@@ -33,8 +33,8 @@ func (c *Client) Start() error {
 		return conErr
 	}
 
-	go c.Write(con)
-	//	go c.Read(con)
+	go write(con)
+	go read(con)
 
 	cancelCh := make(chan os.Signal, 1)
 
@@ -45,24 +45,17 @@ func (c *Client) Start() error {
 	return con.Close()
 }
 
-func (c Client) Read(con net.Conn) {
-
-	r := bufio.NewReader(con)
-
-	for {
-		go func() {
-			data, err := r.ReadBytes('\n')
-			fmt.Println(string(data), err)
-		}()
-	}
+func read(con net.Conn) {
 
 }
 
-func (c Client) Write(con net.Conn) {
+func write(con net.Conn) {
 	s := bufio.NewScanner(os.Stdin)
 
 	for s.Scan() {
-		c.Message = s.Text()
-		json.NewEncoder(con).Encode(c)
+		go func(c net.Conn) {
+			n, err := c.Write(s.Bytes())
+			fmt.Println(n, err)
+		}(con)
 	}
 }
