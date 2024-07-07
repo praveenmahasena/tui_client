@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -33,8 +34,8 @@ func (c *Client) Start() error {
 		return conErr
 	}
 
-	go write(con)
-	go read(con)
+	go c.write(con)
+	go c.read(con)
 
 	cancelCh := make(chan os.Signal, 1)
 
@@ -45,17 +46,34 @@ func (c *Client) Start() error {
 	return con.Close()
 }
 
-func read(con net.Conn) {
+func (c *Client) read(con net.Conn) {
+	prefix := c.makeHeaderMsg()
 
+	scanner := bufio.NewScanner(con)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.HasPrefix(text, prefix) {
+			continue
+		}
+		fmt.Println(text)
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("scanner has an error: %s\n", err)
+	}
 }
 
-func write(con net.Conn) {
+func (c *Client) write(con net.Conn) {
 	s := bufio.NewScanner(os.Stdin)
 
 	for s.Scan() {
-		go func(c net.Conn) {
-			n, err := c.Write(s.Bytes())
-			fmt.Println(n, err)
-		}(con)
+		_, err := con.Write([]byte(fmt.Sprintf("%s: %s\n", c.makeHeaderMsg(), s.Text())))
+		if err != nil {
+			fmt.Printf("unable to write: %s\n", err)
+		}
 	}
+}
+
+func (c *Client) makeHeaderMsg() string {
+	return fmt.Sprintf("Message From %s", c.UserName)
 }
